@@ -1,0 +1,34 @@
+// backend/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = "mysql://root:@localhost:3306/proxyapp"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("user")
+  createdAt DateTime @default(now())
+  orders    Order[]
+}
+
+model Order {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  proxyType   String
+  country     String
+  count       Int
+  period      String
+  totalPrice  Float
+  status      String   @default("pending") // pending, approved, declined
+  notes       String?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+}

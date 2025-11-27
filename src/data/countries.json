@@ -1,0 +1,57 @@
+[
+  {
+    "code": "AU",
+    "name": "Australia",
+    "stock": 1668
+  },
+  {
+    "code": "CA",
+    "name": "Canada",
+    "stock": 10095
+  },
+  {
+    "code": "DE",
+    "name": "Germany",
+    "stock": 16616
+  },
+  {
+    "code": "FR",
+    "name": "France",
+    "stock": 2063
+  },
+  {
+    "code": "GB",
+    "name": "United Kingdom",
+    "stock": 13300
+  },
+  {
+    "code": "JP",
+    "name": "Japan",
+    "stock": 13
+  },
+  {
+    "code": "NL",
+    "name": "Netherlands",
+    "stock": 20756
+  },
+  {
+    "code": "RU",
+    "name": "Russia",
+    "stock": 1368
+  },
+  {
+    "code": "SG",
+    "name": "Singapore",
+    "stock": 6
+  },
+  {
+    "code": "AE",
+    "name": "United Arab Emirates",
+    "stock": 1870
+  },
+  {
+    "code": "US",
+    "name": "United States",
+    "stock": 1870
+  }
+]

@@ -1,7 +1,9 @@
 // src/store/proxyStore.ts
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import countriesData from '../data/countries.json';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import countriesData from "../data/countries.json";
+import { API } from "../config/api";
+import { useAuthStore } from "./authStore";
 
 interface Country {
   name: string;
@@ -11,108 +13,151 @@ interface Country {
 
 interface ProxyType {
   id: string;
-  type: 'IPv6' | 'IPv4' | 'Shared';
+  type: "IPv6" | "IPv4" | "Shared";
   country: string;
   costPerWeek: number;
   costPerMonth: number;
 }
 
-interface Order {
-  id: string;
-  proxyType: string;
-  country: string;
-  count: number;
-  period: string;
-  totalPrice: number;
-  status: 'pending' | 'approved' | 'declined';
-  createdAt: string;
-  notes?: string;
-}
-
 interface ProxyStore {
   proxyTypes: ProxyType[];
   countries: Country[];
-  orders: Order[];
 
-  updateProxyCountry: (id: string, country: string) => void;
-  updateProxyPricing: (id: string, costPerWeek: number, costPerMonth: number) => void;
-//   addOrder: (order: Omit<Order, 'id' | 'status' | 'createdAt'>) => void;
-//   updateOrderStatus: (id: string, status: 'approved' | 'declined') => void;
-//   updateOrderNotes: (id: string, notes: string) => void;
+  // Load from backend
+  fetchProxyTypes: () => Promise<void>;
+
+  // Admin actions
+  updateProxyCountry: (id: string, country: string) => Promise<void>;
+  updateProxyPricing: (
+    id: string,
+    costPerWeek: number,
+    costPerMonth: number
+  ) => Promise<void>;
+
+  addProxyType: (
+    type: string,
+    country: string,
+    costPerWeek: number,
+    costPerMonth: number
+  ) => Promise<void>;
 }
-
-// DEFAULTS (only used once)
-const DEFAULT_PROXY_TYPES: ProxyType[] = [
-  { id: '1', type: 'IPv6', country: 'Canada', costPerWeek: 0.04, costPerMonth: 0.16 },
-  { id: '2', type: 'IPv4', country: 'Australia', costPerWeek: 0.35, costPerMonth: 1.50 },
-  { id: '3', type: 'Shared', country: 'France', costPerWeek: 0.10, costPerMonth: 0.40 },
-];
-
-const DEFAULT_COUNTRIES: Country[] = countriesData
 
 export const useProxyStore = create<ProxyStore>()(
   persist(
     (set, get) => ({
-      // Initialize with defaults only if not in localStorage
-      proxyTypes: (() => {
-        const saved = localStorage.getItem('proxy-store');
-        if (saved) {
-          const parsed = JSON.parse(saved);          
-          return parsed.state?.proxyTypes || DEFAULT_PROXY_TYPES;
-        }
-        return DEFAULT_PROXY_TYPES;
-      })(),
+      proxyTypes: [],
 
-      countries: DEFAULT_COUNTRIES,
-      orders: [],
+      countries: countriesData,
 
-      updateProxyCountry: (id, country) =>
+      /**
+       * Load pricing from backend (public API)
+       */
+      fetchProxyTypes: async () => {
+        const res = await fetch(API.pricingGet);
+        const data = await res.json();
+
+        // Format matches your old state exactly
+        const normalized: ProxyType[] = data.map((item: any) => ({
+          id: String(item.id),
+          type: item.type,
+          country: item.country,
+          costPerWeek: Number(item.costPerWeek),
+          costPerMonth: Number(item.costPerMonth),
+        }));
+
+        set({ proxyTypes: normalized });
+      },
+
+      /**
+       * Admin: Update only the country
+       */
+      updateProxyCountry: async (id, country) => {
+        const { token } = useAuthStore.getState();
+        const item = get().proxyTypes.find((p) => p.id === id);
+        if (!item) return;
+
+        await fetch(API.pricingUpdate(Number(id)), {
+          method: "PATCH",
+          headers: { 
+            "Content-Type": "application/json", 
+            "Authorization": `Bearer ${token}`},
+          body: JSON.stringify({
+            type: item.type,
+            country,
+            costPerWeek: item.costPerWeek,
+            costPerMonth: item.costPerMonth,
+          }),
+        });
+
+        // Update local state after successful API
         set((state) => ({
           proxyTypes: state.proxyTypes.map((p) =>
             p.id === id ? { ...p, country } : p
           ),
-        })),
+        }));
+      },
 
-      updateProxyPricing: (id, costPerWeek, costPerMonth) =>
+      /**
+       * Admin: Update pricing (week + month)
+       */
+      updateProxyPricing: async (id, costPerWeek, costPerMonth) => {
+        const { token } = useAuthStore.getState();
+        const item = get().proxyTypes.find((p) => p.id === id);
+        if (!item) return;
+
+        await fetch(API.pricingUpdate(Number(id)), {
+          method: "PATCH",
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`   // 🟢 ADD THIS
+           },
+          body: JSON.stringify({
+            type: item.type,
+            country: item.country,
+            costPerWeek,
+            costPerMonth,
+          }),
+        });
+
+        // Update local state
         set((state) => ({
           proxyTypes: state.proxyTypes.map((p) =>
             p.id === id ? { ...p, costPerWeek, costPerMonth } : p
           ),
-        })),
+        }));
+      },
 
-    //   addOrder: (order) =>
-    //     set((state) => ({
-    //       orders: [
-    //         {
-    //           ...order,
-    //           id: Date.now().toString(),
-    //           status: 'pending',
-    //           createdAt: new Date().toISOString(),
-    //         },
-    //         ...state.orders,
-    //       ],
-    //     })),
+      /**
+       * Admin: Add new Proxy Pricing
+       */
+      addProxyType: async (type, country, costPerWeek, costPerMonth) => {
+        const res = await fetch(API.pricingAdd, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type, country, costPerWeek, costPerMonth }),
+        });
 
-    //   updateOrderStatus: (id, status) =>
-    //     set((state) => ({
-    //       orders: state.orders.map((o) =>
-    //         o.id === id ? { ...o, status } : o
-    //       ),
-    //     })),
+        const data = await res.json();
 
-    //   updateOrderNotes: (id, notes) =>
-    //     set((state) => ({
-    //       orders: state.orders.map((o) =>
-    //         o.id === id ? { ...o, notes } : o
-    //       ),
-    //     })),
+        // Add to local store
+        set((state) => ({
+          proxyTypes: [
+            ...state.proxyTypes,
+            {
+              id: String(data.id),
+              type,
+              country,
+              costPerWeek,
+              costPerMonth,
+            },
+          ],
+        }));
+      },
     }),
     {
-      name: 'proxy-store',
-      // Only persist proxyTypes & orders
+      name: "proxy-store",
       partialize: (state) => ({
-        proxyTypes: state.proxyTypes,
-        orders: state.orders,
+        proxyTypes: state.proxyTypes, // persist fetched pricing
       }),
     }
   )

@@ -7,6 +7,8 @@ import { useOrderStore } from '../store/orderStore';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
+const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER;
+
 interface Props {
   proxyId: string; // ← CHANGE: Only pass ID
 }
@@ -28,6 +30,10 @@ const periodMultiplier: Record<string, number> = {
 export default function ProxyCard({ proxyId }: Props) {
   const { proxyTypes, countries, updateProxyCountry } = useProxyStore();
   
+  useEffect(() => {
+    useProxyStore.getState().fetchProxyTypes();
+  }, []);
+  
   // ← ALWAYS GET FRESH PROXY FROM STORE
   const freshProxy = proxyTypes.find(p => p.id === proxyId)!;
   if (!freshProxy) return null;
@@ -45,11 +51,21 @@ export default function ProxyCard({ proxyId }: Props) {
 
   const selectedPeriod = periodOptions.find(p => p.value === period)!;
 
-  const costPerUnit =
-    period === '1 month' || period === '3 days'
-      ? freshProxy.costPerMonth * periodMultiplier[period]
-      : freshProxy.costPerWeek;
+  // Cost per unit based on period selection
+  let costPerUnit = 0;
 
+  if (period === '1 week') {
+    costPerUnit = freshProxy.costPerWeek;
+  } 
+  else if (period === '1 month') {
+    costPerUnit = freshProxy.costPerMonth;
+  } 
+  else if (period === '3 days') {
+    // 3-day cost derived from weekly cost
+    costPerUnit = freshProxy.costPerWeek * (3 / 7);
+  }
+
+  // Calculate total
   const totalPrice = Number((costPerUnit * count).toFixed(2));
 
     const { user } = useAuthStore();
@@ -67,11 +83,11 @@ export default function ProxyCard({ proxyId }: Props) {
     try {
         // 2. PLACE ORDER
         const order = {
-        proxyType: freshProxy.type,
-        country: freshProxy.country,
-        count,
-        period,
-        totalPrice,
+          proxyType: freshProxy.type,
+          country: freshProxy.country,
+          count,
+          period,
+          totalPrice,
         };
 
         await addOrder(order);
@@ -92,7 +108,7 @@ export default function ProxyCard({ proxyId }: Props) {
     `.trim();
 
         const encodedMessage = encodeURIComponent(message);
-        const whatsappUrl = `https://wa.me/923482727141?text=${encodedMessage}`;
+        const whatsappUrl = `https://wa.me/$${whatsappNumber}?text=${encodedMessage}`;
 
         // === OPEN WHATSAPP WITH MESSAGE ===
         const link = document.createElement('a');

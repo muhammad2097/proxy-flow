@@ -1,10 +1,10 @@
 export default function Footer() {
   return (
-    <footer className="bg-dark text-light py-12 mt-20 dark:bg-gray-800">
+    <footer className="bg-dark text-light py-12 dark:bg-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-lg font-bold mb-4">ProxyFlow</h3>
+            <h3 className="text-lg font-bold mb-4">Proxies911</h3>
             <p className="text-sm text-gray-400 dark:text-gray-500">Premium proxy solutions for privacy, speed, and reliability.</p>
           </div>
           <div>
@@ -33,7 +33,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-8 pt-8 border-t border-gray-800 text-center text-sm text-gray-500 dark:border-gray-700">
-          © 2025 ProxyFlow. All rights reserved.
+          © 2025 Proxies911. All rights reserved.
         </div>
       </div>
     </footer>

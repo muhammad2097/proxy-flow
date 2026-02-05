@@ -1,6 +1,7 @@
 // src/store/authStore.ts
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { API } from "../config/api";
 
 interface User {
   id: number;
@@ -25,7 +26,7 @@ export const useAuthStore = create<AuthStore>()(
       token: null,
 
       signup: async (name, email, password) => {
-        const res = await fetch('http://localhost:5000/api/signup', {
+        const res = await fetch(API.signup, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, email, password }),
@@ -36,7 +37,7 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       login: async (email, password) => {
-        const res = await fetch('http://localhost:5000/api/login', {
+        const res = await fetch(API.login, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password }),
@@ -54,7 +55,7 @@ export const useAuthStore = create<AuthStore>()(
         const { token } = JSON.parse(saved).state;
         if (!token) return;
 
-        const res = await fetch('http://localhost:5000/api/me', {
+        const res = await fetch(API.me, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {

@@ -1,8 +1,10 @@
+const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER;
+
 // src/components/WhatsappFloat.tsx
 export default function WhatsappFloat() {
   return (
     <a
-      href="https://wa.me/923482727141?text=Hi%20ProxyFlow%20Support!"
+      href={`https://wa.me/${whatsappNumber}?text=Hi%20Proxies911%20Support!`}
       target="_blank"
       rel="noopener noreferrer"
       className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-green-500 rounded-full shadow-lg flex items-center justify-center hover:bg-green-600 transition-all hover:scale-110"

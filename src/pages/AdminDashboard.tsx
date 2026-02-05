@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { getFlagSvgUrl } from '../utils/flags';
 import Layout from '../components/layout/Layout';
 import { useNavigate } from 'react-router-dom';
+import { API } from "../config/api";
 
 interface AdminOrder {
   id: number;
@@ -48,6 +49,10 @@ export default function AdminDashboard() {
     }
   }, [user, navigate]);
 
+  useEffect(() => {
+    useProxyStore.getState().fetchProxyTypes();
+  }, []);
+
   if (!user || user.role !== 'admin') {
     return null;
   }
@@ -58,7 +63,7 @@ export default function AdminDashboard() {
 
     const fetchOrders = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/admin/orders', {
+        const res = await fetch(API.adminOrders, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -78,7 +83,7 @@ export default function AdminDashboard() {
   // UPDATE STATUS
   const updateStatus = async (id: number, status: 'approved' | 'declined') => {
     try {
-      await fetch(`http://localhost:5000/api/admin/orders/${id}/status`, {
+      await fetch(API.adminUpdateStatus(id), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -96,7 +101,7 @@ export default function AdminDashboard() {
   const saveNotes = async (id: number) => {
     const note = notes[id] || '';
     try {
-      await fetch(`http://localhost:5000/api/admin/orders/${id}/notes`, {
+      await fetch(API.adminUpdateNotes(id), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -113,13 +118,24 @@ export default function AdminDashboard() {
   };
 
   // SAVE PRICING
-  const handleSavePrice = (proxyId: string) => {
-    const { week, month } = priceForm[proxyId] || {};
-    if (week !== undefined && month !== undefined) {
-      updateProxyPricing(proxyId, week, month);
-    }
-    setEditingPriceId(null);
-  };
+  // const handleSavePrice = (proxyId: string) => {
+  //   const { week, month } = priceForm[proxyId] || {};
+  //   if (week !== undefined && month !== undefined) {
+  //     updateProxyPricing(proxyId, week, month);
+  //   }
+  //   setEditingPriceId(null);
+  // };
+
+const handleSavePrice = async (proxyId: string) => {
+  const { week, month } = priceForm[proxyId] || {};
+
+  if (week !== undefined && month !== undefined) {
+    await updateProxyPricing(proxyId, Number(week), Number(month));
+  }
+
+  setEditingPriceId(null);
+};
+
 
   if (loading) {
     return (
@@ -217,7 +233,7 @@ export default function AdminDashboard() {
                       <th className="text-left py-4 px-6">Customer</th>
                       <th className="text-left py-4 px-6">Type</th>
                       <th className="text-left py-4 px-6">Country</th>
-                      <th className="text-left py-4 px-6">Qty × Period</th>
+                      <th className="text-left py-4 px-4">Qty × Period</th>
                       <th className="text-left py-4 px-6">Total</th>
                       <th className="text-left py-4 px-6">Status</th>
                       <th className="text-left py-4 px-6">Time</th>
@@ -262,7 +278,7 @@ export default function AdminDashboard() {
                                 </div>
                               </td>
                               <td className="py-4 px-6">{o.count} × {o.period}</td>
-                              <td className="py-4 px-6 font-semibold">${o.totalPrice.toFixed(2)}</td>
+                              <td className="py-4 px-6 font-semibold">${Number(o.totalPrice).toFixed(2)}</td>
                               <td className="py-4 px-6">
                                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                                   o.status === 'approved' ? 'bg-green-500/20 text-green-300' :

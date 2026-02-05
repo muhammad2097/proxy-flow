@@ -32,6 +32,10 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    useProxyStore.getState().fetchProxyTypes();
+  }, []);
+
   const formatNumber = (num: number) => num.toLocaleString();
 
   // Smooth Scroll to "Choose Your Plan"

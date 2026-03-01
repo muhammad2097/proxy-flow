@@ -121,15 +121,22 @@ export default function ProxyCard({ proxyId }: Props) {
 
         alert('Order placed! Details sent to WhatsApp.');
         navigate('/profile');
-    } catch (error: any) {
-        // 4. ERROR HANDLING
-        if (error.message?.includes('token')) {
-        alert('Session expired. Please login again.');
-        navigate('/login', { replace: true });
-        } else {
-        alert(error.message || 'Failed to place order');
-        }
-    }
+      } catch (error: any) {
+              // 3. ERROR HANDLING & BLOCKING
+              // This catches the "Insufficient balance" message from your PHP script
+              
+              if (error.message?.toLowerCase().includes('balance')) {
+                  alert(`Payment Failed: ${error.message}`);
+                  navigate('/topup'); // Send them to the recharge page
+              } else if (error.message?.toLowerCase().includes('token')) {
+                  alert('Session expired. Please login again.');
+                  navigate('/login', { replace: true });
+              } else {
+                  alert(error.message || 'Failed to place order. Please try again.');
+              }
+              
+              // The WhatsApp flow will NOT proceed because of the catch block.
+      }
     };
 
   useEffect(() => {

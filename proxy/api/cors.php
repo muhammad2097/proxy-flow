@@ -1,6 +1,7 @@
 <?php
 $allowed_origins = [
-    "http://localhost:5173",       // local react dev
+    "http://localhost:5173",
+    "http://localhost:5174",       // local react dev
     "https://yourfrontend.com",    // replace with your production domain
     "https://www.yourfrontend.com"
 ];

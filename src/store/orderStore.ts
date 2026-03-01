@@ -47,7 +47,25 @@ export const useOrderStore = create<OrderStore>((set) => ({
       },
       body: JSON.stringify(order),
     });
-    const newOrder = await res.json();
-    set((state) => ({ orders: [newOrder, ...state.orders] }));
+
+    const responseData = await res.json();
+
+    if (!res.ok) {
+      // Specifically handles the 'Insufficient balance' error from PHP
+      throw new Error(responseData.error || 'Order failed');
+    }
+
+    // 1. Update the Balance in AuthStore immediately
+    // We use setState to reach into the other store without a hook
+    if (responseData.new_balance !== undefined) {
+      useAuthStore.setState((state) => ({
+        user: state.user ? { ...state.user, balance: responseData.new_balance } : null
+      }));
+    }
+    
+    // 2. Add the new order to the list
+    set((state) => ({ 
+      orders: [responseData.order || responseData, ...state.orders] 
+    }));
   },
 }));

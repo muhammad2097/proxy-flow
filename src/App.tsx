@@ -7,6 +7,7 @@ import AdminSettings from './pages/AdminSettings';
 import Profile from './pages/Profile';
 import { useEffect } from 'react';
 import { useAuthStore } from './store/authStore';
+import TopUp from './pages/Topup';
 
 function App() {
   
@@ -19,6 +20,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/topup" element={<TopUp />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/settings" element={<AdminSettings />} />
         <Route path="/profile" element={<Profile />} />

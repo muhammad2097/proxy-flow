@@ -1,4 +1,3 @@
-// src/store/authStore.ts
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { API } from "../config/api";
@@ -8,6 +7,7 @@ interface User {
   name: string;
   email: string;
   role: 'user' | 'admin';
+  balance: number; // Added balance property
 }
 
 interface AuthStore {
@@ -15,13 +15,14 @@ interface AuthStore {
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
+  topup: (amount: number) => Promise<void>; // Added topup method
   logout: () => void;
   loadUser: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
 
@@ -45,6 +46,34 @@ export const useAuthStore = create<AuthStore>()(
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Login failed');
         set({ user: data.user, token: data.token });
+      },
+
+      // Inside useAuthStore (src/store/authStore.ts)
+      topup: async (amount: number) => {
+        const { token, user } = get();
+        if (!token || !user) throw new Error("Not authenticated");
+
+        const res = await fetch(API.topup, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ user_id: user.id, amount }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Top-up failed');
+        }
+
+        // UPDATE BALANCE IMMEDIATELY
+        if (data.new_balance !== undefined) {
+          set((state) => ({
+            user: state.user ? { ...state.user, balance: data.new_balance } : null
+          }));
+        }
       },
 
       logout: () => set({ user: null, token: null }),

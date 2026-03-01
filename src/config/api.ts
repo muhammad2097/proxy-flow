@@ -18,4 +18,8 @@ export const API = {
 
   pricingAdd: endpoint("admin-pricing-add.php"),
   pricingUpdate: (id: number) => endpoint(`admin-pricing-update.php?id=${id}`),
+
+  // Wallet Endpoints
+  topup: endpoint("topup.php"),
+  getBalance: (userId: number) => endpoint(`get-balance.php?user_id=${userId}`),
 };
